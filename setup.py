@@ -13,15 +13,14 @@ extensions = [
 
 setup(
     name = "cymesh",
-    version = '0.1.0',
+    version = '1.0.0',
     author = 'joelsimon.net',
+    author_email='joelsimon6@gmail.com',
     install_requires = ['numpy', 'cython'],
     license = 'MIT',
     cmdclass={'build_ext' : build_ext},
-    # include_dirs = [numpy.get_include()],
-
+    packages = ['cymesh'],
     ext_modules = cythonize(
         extensions,
-        # include_path = [numpy.get_include()],
     )
 )
