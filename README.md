@@ -9,8 +9,14 @@ Requires cython and pygame/pyopengl for viewing.
 ```
 git clone https://github.com/Sloth6/cymesh
 cd cymesh
-python setup.py install
+python setup.py build_ext --inplace
 python demo.py
+```
+
+To install locally.
+
+```
+python setup.py install --user
 ```
 
 Here is all the code in demo.py for creating a mesh from an .obj file and viewing it. Mesh's can also be created from a list of polygons.
