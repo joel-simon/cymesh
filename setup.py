@@ -4,7 +4,6 @@ from distutils.extension import Extension
 
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
-import numpy
 
 extensions = [
     Extension('cymesh.vector3D', ['cymesh/vector3D.pyx']),
@@ -19,10 +18,10 @@ setup(
     install_requires = ['numpy', 'cython'],
     license = 'MIT',
     cmdclass={'build_ext' : build_ext},
-    include_dirs = [numpy.get_include()],
+    # include_dirs = [numpy.get_include()],
 
     ext_modules = cythonize(
         extensions,
-        include_path = [numpy.get_include()],
+        # include_path = [numpy.get_include()],
     )
 )

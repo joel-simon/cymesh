@@ -1,5 +1,5 @@
-import numpy as np
-cimport numpy as np
+# import numpy as np
+# cimport numpy as np
 from vector3D cimport cross, dot, vadd, vsub, vdivf, vdist, inormalized, vmultf
 
 cdef class Mesh:

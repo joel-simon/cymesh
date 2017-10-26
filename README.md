@@ -4,7 +4,7 @@ A Half-Edge mesh implemented in cython. The mesh is intended for dynamic manipul
 
 
 ## INSTALL
-Requires numpy and pygame/pyopengl for viewing.
+Requires cython and pygame/pyopengl for viewing.
 
 ```
 git clone https://github.com/Sloth6/cymesh
