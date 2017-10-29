@@ -1,5 +1,5 @@
-# import numpy as np
-# cimport numpy as np
+import numpy as np
+cimport numpy as np
 from vector3D cimport cross, dot, vadd, vsub, vdivf, vdist, inormalized, vmultf
 
 cdef class Mesh:
@@ -143,19 +143,22 @@ cdef class Mesh:
             Edge edge
 
         for edge in self.edges:
-            v1, v2 = edge.vertices()
+            # Select Opposite Edges.
+            v1 = edge.he.next.next.vert
+            v2 = edge.he.twin.next.next.vert
             d = vdist(v1.p, v2.p)
 
             if edge.length() - d > epsilon:
                 edge.flip()
 
-    cpdef int splitEdges(self, double max_edge_length) except -1:
+    cpdef int splitEdges(self, double max_edge_length=0.0) except -1:
         """ Split all edges whose lenghths are greater than given limit.
         """
         cdef int n = 0
         cdef Edge edge
 
-        for edge in self.edges:
+        # Copy list to avoid editing in place.
+        for edge in list(self.edges):
             if edge.length() >= max_edge_length:
                 self.splitEdge(edge)
                 n += 1
@@ -360,56 +363,44 @@ cdef class Mesh:
         return v_n
 
     # Query
-    # def export(self):
-    #     """ Return mesh as numpy arrays.
-    #     """
-    #     cdef:
-    #         Vert v1, v2, v3
-    #         Node node
-    #         Edge edge
-    #         Face face
-    #         dict vid_to_idx = {}
+    def export(self):
+        """ Return mesh as numpy arrays.
+        """
+        cdef:
+            Vert v1, v2, v3
+            Edge edge
+            Face face
+            dict vid_to_idx = {}
 
-    #     self.calculate_normals()
-    #     self.calculate_curvature()
+        self.calculateNormals()
+        self.calculateCurvature()
 
-    #     verts = np.zeros((self.n_verts, 3))
-    #     vert_normals = np.zeros((self.n_verts, 3))
-    #     curvature = np.zeros(self.n_verts)
+        verts = np.zeros((len(self.verts), 3))
+        vert_normals = np.zeros((len(self.verts), 3))
+        curvature = np.zeros(len(self.verts))
 
-    #     edges = np.zeros((self.n_edges, 2), dtype='i')
-    #     faces = np.zeros((self.n_faces, 3), dtype='i')
-    #     face_normals = np.zeros((self.n_faces, 3))
+        edges = np.zeros((len(self.edges), 2), dtype='i')
+        faces = np.zeros((len(self.faces), 3), dtype='i')
+        face_normals = np.zeros((len(self.faces), 3))
 
-    #     node = self.verts
-    #     for i in range(self.n_verts):
-    #         v = <Vert *>node.data
-    #         verts[i, 0] = v.p[0]
-    #         verts[i, 1] = v.p[1]
-    #         verts[i, 2] = v.p[2]
-    #         vid_to_idx[v.id] = i
-    #         vert_normals[i] = v.normal#[v.normal.x, v.normal.y, v.normal.z]
-    #         curvature[i] = v.curvature
-    #         node = node.next
+        for i, v in enumerate(self.verts):
+            verts[i] = v.p
+            vid_to_idx[v.id] = i
+            vert_normals[i] = v.normal
+            curvature[i] = v.curvature
 
-    #     node = self.edges
-    #     for i in range(self.n_edges):
-    #         edge = <Edge *>node.data
-    #         self.edge_verts(edge, &v1, &v2)
-    #         edges[i, 0] = vid_to_idx[v1.id]
-    #         edges[i, 1] = vid_to_idx[v2.id]
-    #         node = node.next
+        for edge in self.edges:
+            v1, v2 = edge.vertices()
+            edges[i, 0] = vid_to_idx[v1.id]
+            edges[i, 1] = vid_to_idx[v2.id]
 
-    #     node = self.faces
-    #     for i in range(self.n_faces):
-    #         face = <Face *>node.data
-    #         self.face_verts(face, &v1, &v2, &v3)
-    #         faces[i, 0] = vid_to_idx[v1.id]
-    #         faces[i, 1] = vid_to_idx[v2.id]
-    #         faces[i, 2] = vid_to_idx[v3.id]
-    #         face_normals[i] = face.normal#[face.normal.x, face.normal.y, face.normal.z]
-    #         node = node.next
+        for face in self.faces:
+            v1, v2, v3 = face.vertices()
+            faces[i, 0] = vid_to_idx[v1.id]
+            faces[i, 1] = vid_to_idx[v2.id]
+            faces[i, 2] = vid_to_idx[v3.id]
+            face_normals[i] = face.normal
 
-    #     return {'vertices': verts, 'edges':edges, 'faces':faces,
-    #             'vertice_normals': vert_normals, 'face_normals':face_normals,
-    #             'curvature': curvature}
+        return {'vertices': verts, 'edges':edges, 'faces':faces,
+                'vertice_normals': vert_normals, 'face_normals':face_normals,
+                'curvature': curvature}

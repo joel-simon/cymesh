@@ -4,14 +4,16 @@
 # cython: nonecheck=False
 # cython: cdivision=True
 
-from vector3D cimport cross, dot, vadd, vsub, vdivf, vdist, inormalized, vmultf
+from vector3D cimport vdist
+cimport numpy as np
+import numpy as np
 
 cdef class Vert:
     def __init__(self, id, x, y, z, he):
         self.id = id
-        self.p = [x, y, z]
+        self.p = np.array([x, y, z])
         self.he = he
-        self.normal = [0, 0, 0]
+        self.normal = np.zeros(3)
         self.curvature = 0
         self.data = dict()
 
@@ -60,7 +62,6 @@ cdef class Edge:
     cpdef double length(self):
         cdef Vert v1 = self.he.vert
         cdef Vert v2 = self.he.next.vert
-
         return vdist(v1.p, v2.p)
 
     cpdef tuple vertices(self):
@@ -116,6 +117,11 @@ cdef class Edge:
             v2.he = he11
 
 cdef class Face:
+    def __init__(self, id, he):
+        self.id = id
+        self.he = he
+        self.normal = np.zeros(3)
+
     cpdef list vertices(self):
         cdef list result = []
         cdef HalfEdge h = self.he

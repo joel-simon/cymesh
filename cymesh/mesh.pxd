@@ -1,6 +1,6 @@
 from structures cimport Vert, Edge, Face, HalfEdge
 
-cdef inline double signed_triangle_volume(double p1[3], double p2[3], double p3[3]):
+cdef inline double signed_triangle_volume(double[:] p1, double[:] p2, double[:] p3):
     cdef double v321 = p3[0] * p2[1] * p1[2]
     cdef double v231 = p2[0] * p3[1] * p1[2]
     cdef double v312 = p3[0] * p1[1] * p2[2]
@@ -24,7 +24,7 @@ cdef class Mesh:
 
     # Public methods.
     cpdef void shortenEdges(self)
-    cpdef int splitEdges(self, double max_edge_length) except -1
+    cpdef int splitEdges(self, double max_edge_length=*) except -1
     cpdef double volume(self)
     cpdef void calculateNormals(self)
     cpdef void calculateCurvature(self)

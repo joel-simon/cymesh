@@ -76,14 +76,17 @@ class Viewer(object):
         self.gl_list = None
 
     def drawMesh(self, mesh):
+        # In case changes have been made to the mesh.
+        mesh.calculateNormals()
+
         norm_length = .15
         glColor(1, 1, 1)
 
         glBegin(GL_TRIANGLES)
         for face in mesh.faces:
             for vert in face.vertices():
-                glNormal3fv(vert.normal)
-                glVertex3fv(vert.p)
+                glNormal3fv(list(vert.normal))
+                glVertex3fv(list(vert.p))
         glEnd()
 
 
@@ -98,27 +101,27 @@ class Viewer(object):
         glLineWidth(1)
 
         # face normals
-        glColor(0,0,1)
-        for face in mesh.faces:
-            glBegin(GL_LINES)
+        # glColor(0,0,1)
+        # for face in mesh.faces:
+        #     glBegin(GL_LINES)
 
-            fv = face.vertices()
+        #     fv = face.vertices()
 
-            center = [0.0, 0.0, 0.0]
-            other = [0.0,0.0,0.0]
+        #     center = [0.0, 0.0, 0.0]
+        #     other = [0.0,0.0,0.0]
 
-            for v in fv:
-                center[0] += v.p[0]
-                center[1] += v.p[1]
-                center[2] += v.p[2]
+        #     for v in fv:
+        #         center[0] += v.p[0]
+        #         center[1] += v.p[1]
+        #         center[2] += v.p[2]
 
-            center = [v/len(fv) for v in center]
+        #     center = [v/len(fv) for v in center]
 
-            normal = [c + (v*norm_length) for c, v in zip(center, face.normal)]
+        #     normal = [c + (v*norm_length) for c, v in zip(center, face.normal)]
 
-            glVertex3fv(center)
-            glVertex3fv(normal)
-            glEnd()
+        #     glVertex3fv(center)
+        #     glVertex3fv(normal)
+        #     glEnd()
 
         # Draw curvature
         # glColor(0, 1, 0)
