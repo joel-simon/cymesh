@@ -7,7 +7,6 @@ Currently only supports tri-meshes.
 TODO:
 
 * support n-gon meshes and have a tri-mesh subclass
-* save as .obj
 
 ## INSTALL
 Requires cython and pygame/pyopengl for viewing.
@@ -29,7 +28,7 @@ python setup.py install
 Here is all the code in demo.py for creating a mesh from an .obj file and viewing it. Mesh's can also be created from a list of polygons.
 
 ```
-ffrom random import random
+from random import random
 from cymesh.mesh import Mesh
 from cymesh.view import Viewer
 
@@ -57,12 +56,17 @@ mesh.writeObj('my_mesh.obj')
 # We can also export the mesh to a dict of numpy arrays.
 export = mesh.export()
 print(export.keys())
-# > dict_keys(['faces', 'vertice_normals', 'face_normals', 'vertices', 'curvature', 'edges'])
+# > dict_keys(['faces', 'vertice_normals', 'face_normals', 'vert_data', 'vertices', 'curvature', 'edges'])
+
+# Each vert has a dictionary 'data' attribute to add additional information.
+# Colors can be passed to the viewer by adding a color to data.
+for vert in mesh.verts:
+    vert.data['color'] = (random(), random(), random())
 
 # View the mesh with pyopengl.
 view = Viewer()
 view.startDraw()
-view.drawMesh(mesh)
+view.drawMesh(mesh, edges=True)
 view.endDraw()
 view.mainLoop()
 
