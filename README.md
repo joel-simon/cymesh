@@ -27,7 +27,7 @@ python setup.py install
 ## Demo
 Here is all the code in demo.py for creating a mesh from an .obj file and viewing it. Mesh's can also be created from a list of polygons.
 
-```
+```python
 from random import random
 from cymesh.mesh import Mesh
 from cymesh.view import Viewer
