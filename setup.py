@@ -1,16 +1,16 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+import os
 import numpy
-from distutils.core import setup
-from distutils.extension import Extension
-
+from setuptools import setup, find_packages
 from Cython.Build import cythonize
-from Cython.Distutils import build_ext
 
-extensions = [
-    Extension('cymesh.vector3D', ['cymesh/vector3D.pxd']),
-    Extension('cymesh.structures', ['cymesh/structures.pyx']),
-    Extension('cymesh.mesh', ['cymesh/mesh.pyx'])
-]
+def find_pyx(path='.'):
+    pyx_files = []
+    for root, dirs, filenames in os.walk(path):
+        for fname in filenames:
+            if fname.endswith('.pyx'):
+                pyx_files.append(os.path.join(root, fname))
+    return pyx_files
 
 setup(
     name = "cymesh",
@@ -19,12 +19,11 @@ setup(
     author_email='joelsimon6@gmail.com',
     install_requires = ['numpy', 'cython'],
     license = 'MIT',
-    cmdclass={'build_ext' : build_ext},
     include_dirs = [numpy.get_include()],
 
-    packages = ['cymesh'],
+    packages = find_packages(),
     ext_modules = cythonize(
-        extensions,
+        find_pyx(),
         include_path = [numpy.get_include()],
     )
 )

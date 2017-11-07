@@ -123,16 +123,17 @@ cdef class Face:
         self.normal = np.zeros(3)
 
     cpdef list vertices(self):
-        cdef list result = []
-        cdef HalfEdge h = self.he
-        cdef HalfEdge start = h
+        return [self.he.vert, self.he.next.vert, self.he.next.next.vert]
+        # cdef list result = []
+        # cdef HalfEdge h = self.he
+        # cdef HalfEdge start = h
 
-        while True:
-            result.append(h.vert)
-            h = h.next
-            if h == start: break
+        # while True:
+        #     result.append(h.vert)
+        #     h = h.next
+        #     if h == start: break
 
-        return result
+        # return result
 
     cpdef list edges(self):
         cdef list result = []

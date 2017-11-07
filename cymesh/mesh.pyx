@@ -85,19 +85,20 @@ cdef class Mesh:
         points = []
         faces = []
 
-        for line in open(filename, 'r'):
-            if line.startswith('#'):
-                continue
-            values = line.split()
-            if not values:continue
-            if values[0] == 'v':
-                points.append([float(v) for v in values[1:4]])
-            elif values[0] == 'f':
-                face = []
-                for v in values[1:]:
-                    w = v.split('/')
-                    face.append(int(w[0]) - 1) # .obj uses 1 based indexing.
-                faces.append(face)
+        with open(filename, 'r') as objfile:
+            for line in objfile:
+                if line.startswith('#'):
+                    continue
+                values = line.split()
+                if not values:continue
+                if values[0] == 'v':
+                    points.append([float(v) for v in values[1:4]])
+                elif values[0] == 'f':
+                    face = []
+                    for v in values[1:]:
+                        w = v.split('/')
+                        face.append(int(w[0]) - 1) # .obj uses 1 based indexing.
+                    faces.append(face)
 
         return cls(points, faces)
 
@@ -361,6 +362,42 @@ cdef class Mesh:
             v_b.he = h_bn
 
         return v_n
+
+    cpdef double[:] boundingBox(self):
+        cdef Vert v = self.verts[0]
+        cdef double[:] bbox = np.zeros(6)
+
+        bbox[0:2] = v.p[0]#, v.p[0]]
+        bbox[2:2] = v.p[1]#, v.p[1]]
+        bbox[4:6] = v.p[2]#, v.p[2]]
+
+        for v in self.verts:
+            bbox[0] = min(bbox[0], v.p[0])
+            bbox[1] = max(bbox[1], v.p[0])
+
+            bbox[2] = min(bbox[2], v.p[1])
+            bbox[3] = max(bbox[3], v.p[1])
+
+            bbox[4] = min(bbox[4], v.p[2])
+            bbox[5] = max(bbox[5], v.p[2])
+
+        return bbox
+
+    cpdef void writeObj(self, str path):
+        with open(path, 'w+') as out:
+            out.write('# Created by cymesh.\n')
+            id_to_idx = {}
+
+            for i, vert in enumerate(self.verts):
+                id_to_idx[vert.id] = i
+                out.write('v %f %f %f\n' % (vert.p[0], vert.p[1], vert.p[2]))
+
+            for face in self.faces:
+                v1, v2, v3 = face.vertices()
+                id1 = id_to_idx[v1.id] + 1
+                id2 = id_to_idx[v2.id] + 1
+                id3 = id_to_idx[v3.id] + 1
+                out.write('f %i %i %i\n' % (id1, id2, id3))
 
     # Query
     def export(self):

@@ -30,3 +30,5 @@ cdef class Mesh:
     cpdef void calculateCurvature(self)
     cpdef list getNearby(self, Vert v, int n)
     cpdef Vert splitEdge(self, Edge e)
+    cpdef double[:] boundingBox(self)
+    cpdef void writeObj(self, str path)

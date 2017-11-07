@@ -12,7 +12,6 @@ from OpenGL.GLUT import *
 from OpenGL.arrays import vbo
 from OpenGL.raw.GL.ARB.vertex_array_object import glGenVertexArrays, \
                                                   glBindVertexArray
-
 class Viewer(object):
     def __init__(self, view_size=(800, 600)):
         self.on = True
@@ -85,20 +84,23 @@ class Viewer(object):
         glBegin(GL_TRIANGLES)
         for face in mesh.faces:
             for vert in face.vertices():
+                color = vert.data.get('color', (1.0,1.0,1.0))
+                glColor(color)
                 glNormal3fv(list(vert.normal))
                 glVertex3fv(list(vert.p))
+
         glEnd()
 
+        # glColor(.8, .8, .8)
+        # for edge in mesh.edges:
+        #     v1, v2 = edge.vertices()
+        #     glLineWidth(1)
+        #     glBegin(GL_LINES)
+        #     glVertex3fv([v*1.001 for v in v1.p])
+        #     glVertex3fv([v*1.001 for v in v2.p])
+        #     glEnd()
 
-        glColor(.9, .9, .9)
-        for edge in mesh.edges:
-            v1, v2 = edge.vertices()
-            glLineWidth(1)
-            glBegin(GL_LINES)
-            glVertex3fv([v*1.001 for v in v1.p])
-            glVertex3fv([v*1.001 for v in v2.p])
-            glEnd()
-        glLineWidth(1)
+        # glLineWidth(1)
 
         # face normals
         # glColor(0,0,1)

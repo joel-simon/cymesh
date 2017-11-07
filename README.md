@@ -29,39 +29,42 @@ python setup.py install
 Here is all the code in demo.py for creating a mesh from an .obj file and viewing it. Mesh's can also be created from a list of polygons.
 
 ```
-from random import random
+ffrom random import random
 from cymesh.mesh import Mesh
 from cymesh.view import Viewer
 
-m = Mesh.from_obj('triangulated_sphere_2.obj')
+mesh = Mesh.from_obj('triangulated_sphere_2.obj')
 
 # Add noise to mesh.
-for v in m.verts:
-    v.p[0] += random() * .1
-    v.p[1] += random() * .1
-    v.p[2] += random() * .1
+for vert in mesh.verts:
+    vert.p[0] += random() * .1
+    vert.p[1] += random() * .1
+    vert.p[2] += random() * .1
 
 # If not given a max length, all edges are split.
-m.splitEdges()
+mesh.splitEdges()
 
 # Flip edges which will become shorter.
-m.shortenEdges()
+mesh.shortenEdges()
 
 # Normals and curvature updates must be called after making changes to mesh.
-m.calculateNormals()
-m.calculateCurvature()
+mesh.calculateNormals()
+mesh.calculateCurvature()
+
+# We can write our new object to a file.
+mesh.writeObj('my_mesh.obj')
 
 # We can also export the mesh to a dict of numpy arrays.
-export = m.export()
+export = mesh.export()
 print(export.keys())
 # > dict_keys(['faces', 'vertice_normals', 'face_normals', 'vertices', 'curvature', 'edges'])
 
 # View the mesh with pyopengl.
-v = Viewer()
-v.startDraw()
-v.drawMesh(m)
-v.endDraw()
-v.mainLoop()
+view = Viewer()
+view.startDraw()
+view.drawMesh(mesh)
+view.endDraw()
+view.mainLoop()
 
 ```
 
@@ -84,6 +87,7 @@ Methods:
     void calculateCurvature()
     list getNearby(Vert v, int n)
     Vert splitEdge(Edge e)
+    tuple boundingBox(self)
 ```
 
 ### Vert
