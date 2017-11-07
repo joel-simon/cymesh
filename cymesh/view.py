@@ -8,7 +8,7 @@ from pygame.constants import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
-
+import numpy as np
 from OpenGL.arrays import vbo
 from OpenGL.raw.GL.ARB.vertex_array_object import glGenVertexArrays, \
                                                   glBindVertexArray
@@ -74,69 +74,47 @@ class Viewer(object):
         self.gl_lists.append(self.gl_list)
         self.gl_list = None
 
-    def drawMesh(self, mesh):
-        # In case changes have been made to the mesh.
-        mesh.calculateNormals()
+    def drawMesh(self, mesh, edges=True):
+        mesh = mesh.export()
 
-        norm_length = .15
-        glColor(1, 1, 1)
+        vert_colors = np.ones_like(mesh['vertices'])
 
-        glBegin(GL_TRIANGLES)
-        for face in mesh.faces:
-            for vert in face.vertices():
-                color = vert.data.get('color', (1.0,1.0,1.0))
-                glColor(color)
-                glNormal3fv(list(vert.normal))
-                glVertex3fv(list(vert.p))
+        for vid, data in mesh['vert_data'].items():
+            if 'color' in data:
+                vert_colors[vid] = data['color']
 
-        glEnd()
+        vertices = mesh['vertices'].flatten()
+        normals  = mesh['vertice_normals'].flatten()
+        findices = mesh['faces'].astype('uint32').flatten()
+        eindices = mesh['edges'].astype('uint32').flatten()
 
-        # glColor(.8, .8, .8)
-        # for edge in mesh.edges:
-        #     v1, v2 = edge.vertices()
-        #     glLineWidth(1)
-        #     glBegin(GL_LINES)
-        #     glVertex3fv([v*1.001 for v in v1.p])
-        #     glVertex3fv([v*1.001 for v in v2.p])
-        #     glEnd()
+        fcolors = vert_colors.flatten()
+        ecolors = np.zeros_like(vert_colors).flatten()
 
-        # glLineWidth(1)
+        # then convert to OpenGL / ctypes arrays:
+        fvertices = (GLfloat * len(vertices))(*vertices)
+        evertices = (GLfloat * len(vertices))(*vertices*1.001)
+        normals = (GLfloat * len(normals))(*normals)
+        findices = (GLuint * len(findices))(*findices)
+        eindices = (GLuint * len(eindices))(*eindices)
+        fcolors = (GLfloat * len(fcolors))(*fcolors)
+        ecolors = (GLfloat * len(ecolors))(*ecolors)
 
-        # face normals
-        # glColor(0,0,1)
-        # for face in mesh.faces:
-        #     glBegin(GL_LINES)
+        glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT)
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glEnableClientState(GL_NORMAL_ARRAY)
+        glEnableClientState(GL_COLOR_ARRAY)
+        glVertexPointer(3, GL_FLOAT, 0, fvertices)
+        glNormalPointer(GL_FLOAT, 0, normals)
+        glColorPointer(3, GL_FLOAT, 0, fcolors)
+        glDrawElements(GL_TRIANGLES, len(findices), GL_UNSIGNED_INT, findices)
 
-        #     fv = face.vertices()
+        if edges:
+            glColorPointer(3, GL_FLOAT, 0, ecolors)
+            glVertexPointer(3, GL_FLOAT, 0, evertices)
+            glDrawElements(GL_LINES, len(eindices), GL_UNSIGNED_INT, eindices)
 
-        #     center = [0.0, 0.0, 0.0]
-        #     other = [0.0,0.0,0.0]
-
-        #     for v in fv:
-        #         center[0] += v.p[0]
-        #         center[1] += v.p[1]
-        #         center[2] += v.p[2]
-
-        #     center = [v/len(fv) for v in center]
-
-        #     normal = [c + (v*norm_length) for c, v in zip(center, face.normal)]
-
-        #     glVertex3fv(center)
-        #     glVertex3fv(normal)
-        #     glEnd()
-
-        # Draw curvature
-        # glColor(0, 1, 0)
-        # glLineWidth(3)
-
-        # vert normals
-        # glColor(1,0,0)
-        # for vert, norm in zip(verts, vert_normals):
-        #     glBegin(GL_LINES)
-        #     norm *= norm_length
-        #     glVertex3fv(vert)
-        #     glVertex3fv(vert + norm)
-        #     glEnd()
+        glPopClientAttrib()
 
     def clear(self):
         self.gl_lists = []

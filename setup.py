@@ -12,6 +12,8 @@ def find_pyx(path='.'):
                 pyx_files.append(os.path.join(root, fname))
     return pyx_files
 
+print(find_packages())
+
 setup(
     name = "cymesh",
     version = '1.0.0',
@@ -25,5 +27,9 @@ setup(
     ext_modules = cythonize(
         find_pyx(),
         include_path = [numpy.get_include()],
-    )
+    ),
+    include_package_data = True,
+    package_data = {
+        'cymesh': ['*.pxd'],
+    },
 )

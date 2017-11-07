@@ -1,3 +1,9 @@
+# cython: boundscheck=False
+# cython: wraparound=True
+# cython: initializedcheck=False
+# cython: nonecheck=False
+# cython: cdivision=True
+import copy
 import numpy as np
 cimport numpy as np
 from vector3D cimport cross, dot, vadd, vsub, vdivf, vdist, inormalized, vmultf
@@ -384,20 +390,31 @@ cdef class Mesh:
         return bbox
 
     cpdef void writeObj(self, str path):
+        self.calculateNormals()
         with open(path, 'w+') as out:
             out.write('# Created by cymesh.\n')
             id_to_idx = {}
 
             for i, vert in enumerate(self.verts):
                 id_to_idx[vert.id] = i
-                out.write('v %f %f %f\n' % (vert.p[0], vert.p[1], vert.p[2]))
+                if 'color' in vert.data:
+                    r, g, b  = vert.data['color']
+                    out.write('v %f %f %f %f %f %f\n' % \
+                                     (vert.p[0], vert.p[1], vert.p[2], r, g, b))
+                else:
+                    out.write('v %f %f %f\n' % (vert.p[0], vert.p[1], vert.p[2]))
+
+            for i, vert in enumerate(self.verts):
+                id_to_idx[vert.id] = i
+                out.write('vn %f %f %f\n' % \
+                            (vert.normal[0], vert.normal[1], vert.normal[2]))
 
             for face in self.faces:
                 v1, v2, v3 = face.vertices()
                 id1 = id_to_idx[v1.id] + 1
                 id2 = id_to_idx[v2.id] + 1
                 id3 = id_to_idx[v3.id] + 1
-                out.write('f %i %i %i\n' % (id1, id2, id3))
+                out.write('f %i//%i %i//%i %i//%i\n' % (id1,id1,id2,id2,id3,id3))
 
     # Query
     def export(self):
@@ -419,19 +436,21 @@ cdef class Mesh:
         edges = np.zeros((len(self.edges), 2), dtype='i')
         faces = np.zeros((len(self.faces), 3), dtype='i')
         face_normals = np.zeros((len(self.faces), 3))
+        vert_data = {}
 
         for i, v in enumerate(self.verts):
             verts[i] = v.p
             vid_to_idx[v.id] = i
             vert_normals[i] = v.normal
             curvature[i] = v.curvature
+            vert_data[i] = copy.deepcopy(v.data)
 
-        for edge in self.edges:
+        for i, edge in enumerate(self.edges):
             v1, v2 = edge.vertices()
             edges[i, 0] = vid_to_idx[v1.id]
             edges[i, 1] = vid_to_idx[v2.id]
 
-        for face in self.faces:
+        for i, face in enumerate(self.faces):
             v1, v2, v3 = face.vertices()
             faces[i, 0] = vid_to_idx[v1.id]
             faces[i, 1] = vid_to_idx[v2.id]
@@ -440,4 +459,4 @@ cdef class Mesh:
 
         return {'vertices': verts, 'edges':edges, 'faces':faces,
                 'vertice_normals': vert_normals, 'face_normals':face_normals,
-                'curvature': curvature}
+                'curvature': curvature, 'vert_data': vert_data}
