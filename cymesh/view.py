@@ -22,7 +22,7 @@ class Viewer(object):
 
         hx = viewport[0]/2
         hy = viewport[1]/2
-        srf = pygame.display.set_mode(viewport, OPENGL | DOUBLEBUF)
+        self.surface = pygame.display.set_mode(viewport, OPENGL | DOUBLEBUF)
 
         glLightfv(GL_LIGHT0, GL_POSITION,  (-40, 200, 100, 0.0))
         glLightfv(GL_LIGHT0, GL_AMBIENT, (0.2, 0.2, 0.2, 1.0))
@@ -39,7 +39,6 @@ class Viewer(object):
 
         # glCullFace(GL_BACK)
         # glDisable( GL_CULL_FACE )
-
         # glPolygonMode ( GL_FRONT_AND_BACK, GL_LINE )
 
         self.clock = pygame.time.Clock()
@@ -64,15 +63,14 @@ class Viewer(object):
 
         self.gl_lists = []
 
-
     def startDraw(self):
         self.gl_list = glGenLists(1)
         glNewList(self.gl_list, GL_COMPILE)
 
     def endDraw(self):
         glEndList()
-        self.gl_lists.append(self.gl_list)
-        self.gl_list = None
+        # self.gl_lists.append(self.gl_list)
+        # self.gl_list = None
 
     def drawMesh(self, mesh, edges=True):
         mesh = mesh.export()
@@ -89,7 +87,7 @@ class Viewer(object):
         eindices = mesh['edges'].astype('uint32').flatten()
 
         fcolors = vert_colors.flatten()
-        ecolors = np.zeros_like(vert_colors).flatten()
+        ecolors = np.zeros_like(vert_colors).flatten() + .5
 
         # then convert to OpenGL / ctypes arrays:
         fvertices = (GLfloat * len(vertices))(*vertices)
@@ -116,9 +114,6 @@ class Viewer(object):
 
         glPopClientAttrib()
 
-    def clear(self):
-        self.gl_lists = []
-
     def handle_input(self, e):
         if e.type == QUIT:
             self.on = False
@@ -130,11 +125,11 @@ class Viewer(object):
             if e.button == 4: self.zpos = max(1, self.zpos-1)
             elif e.button == 5: self.zpos += 1
             elif e.button == 1: self.rotate = True
-            elif e.button == 3: self.move = True
+            # elif e.button == 3: self.move = True
 
         elif e.type == MOUSEBUTTONUP:
             if e.button == 1: self.rotate = False
-            elif e.button == 3: self.move = False
+            # elif e.button == 3: self.move = False
 
         elif e.type == MOUSEMOTION:
             i, j = e.rel
@@ -145,9 +140,12 @@ class Viewer(object):
                 self.tx += i
                 self.ty -= j
 
-        if e.type == KEYDOWN:
-            if e.key == K_g:
-                self.draw_grid = not self.draw_grid
+        # if e.type == KEYDOWN:
+        #     if e.key == K_g:
+        #         self.draw_grid = not self.draw_grid
+        #     elif e.key == K_s:
+        #         print('save!')
+        #         pygame.image.save(self.surface, 'render.jpg')
 
     def step(self, i):
         pass
@@ -161,6 +159,7 @@ class Viewer(object):
             self.clock.tick(15)
             self.step(i)
 
+            # for raw_input('')
             for e in pygame.event.get():
                 self.handle_input(e)
 
@@ -172,12 +171,70 @@ class Viewer(object):
             glRotate(self.ry, 1, 0, 0)
             glRotate(self.rx, 0, 1, 0)
 
-            for gl_list in self.gl_lists:
-                glCallList(gl_list)
-
-            glLineWidth(1)
-            if self.draw_grid:
-                glCallList(G_OBJ_PLANE)
+            glCallList(self.gl_list)
 
             pygame.display.flip()
             i += 1
+
+class AnimationViewer(Viewer):
+    def __init__(self, view_size=(800, 600)):
+        super(AnimationViewer, self).__init__(view_size)
+        self.frames = []
+        self.frame = 0
+        self.animation_playing = True
+
+    def startFrame(self):
+        self.startDraw()
+
+    def endFrame(self):
+        self.endDraw()
+        self.frames.append(self.gl_list)
+
+    def handle_input(self, e):
+        super(AnimationViewer, self).handle_input(e)
+
+        if e.type == MOUSEBUTTONDOWN:
+            # print(e.button)
+            if e.button == 3:
+                # self.animation_playing = not self.animation_playing
+                self.frame = 0
+
+        # if e.type == KEYDOWN:
+    #         if e.key == K_RIGHT:
+    #             if self.frame < self.n_frames - 1:
+    #                 self.frame += 1
+    #                 self.gl_lists = self.view_lists[self.view][self.frame]
+
+    #         elif e.key == K_LEFT:
+    #             if self.frame > 0:
+    #                 self.frame -= 1
+    #                 self.gl_lists = self.view_lists[self.view][self.frame]
+
+    #         elif e.key == K_r:
+    #             self.frame = 0
+    #             self.gl_lists = self.view_lists[self.view][self.frame]
+
+    #         elif e.key == K_SPACE:
+    #             self.animation_playing = not self.animation_playing
+
+    #         elif e.key == K_1:
+    #             self.view = 0
+    #         elif e.key == K_2:
+    #             self.view = 1
+    #         elif e.key == K_3:
+    #             self.view = 2
+    #         self.gl_lists = self.view_lists[self.view][self.frame]
+
+    def step(self, i):
+        if self.animation_playing:
+            self.rx += 1
+            # self.zpos += .25
+
+        if self.animation_playing and self.frame < (len(self.frames) - 1):
+            self.frame += 1
+
+            # if self.frame == len(self.frames):
+            #     self.frame = 0
+
+            self.gl_list = self.frames[self.frame]
+

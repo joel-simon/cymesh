@@ -78,6 +78,14 @@ class TestRandomlyDistribute(unittest.TestCase):
         mesh.shortenEdges()
         self.valdiate_mesh(mesh)
 
+    def test_sudivisions(self):
+        mesh = Mesh.from_obj('triangulated_sphere_2.obj')
+        for _ in range(2):
+            mesh.splitEdges()
+            mesh.shortenEdges()
+        self.valdiate_mesh(mesh)
+
+
     def test_modify(self):
         mesh = Mesh.from_obj('triangulated_sphere_2.obj')
         for _ in range(1):
