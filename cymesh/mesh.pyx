@@ -109,22 +109,22 @@ cdef class Mesh:
         return cls(points, faces)
 
     # Constructor functions.
-    cdef Vert _vert(self, double x, double y, double z, HalfEdge he=None):
+    cpdef Vert _vert(self, double x, double y, double z, HalfEdge he=None):
         cdef Vert vert = Vert(len(self.verts), x, y, z, he)
         self.verts.append(vert)
         return vert
 
-    cdef Edge _edge(self, HalfEdge he=None):
+    cpdef Edge _edge(self, HalfEdge he=None):
         cdef Edge edge = Edge(len(self.edges), he)
         self.edges.append(edge)
         return edge
 
-    cdef Face _face(self, HalfEdge he=None):
+    cpdef Face _face(self, HalfEdge he=None):
         cdef Face face = Face(len(self.faces), he)
         self.faces.append(face)
         return face
 
-    cdef HalfEdge _half(self, HalfEdge twin=None, HalfEdge next=None, \
+    cpdef HalfEdge _half(self, HalfEdge twin=None, HalfEdge next=None, \
                           Vert vert=None, Edge edge=None, Face face=None):
         cdef HalfEdge he = HalfEdge(len(self.halfs), twin, next, vert, edge, face)
 
@@ -177,8 +177,8 @@ cdef class Mesh:
         cdef:
             Face face
             Vert va, vb, vc
-            double vab[3]
-            double vbc[3]
+            double[:] vab = np.zeros(3)
+            double[:] vbc = np.zeros(3)
 
         """ Initialize vert norm values to 0. """
         for va in self.verts:
@@ -186,7 +186,9 @@ cdef class Mesh:
 
         """ Calculate face normals. """
         for face in self.faces:
-            va, vb, vc = face.vertices()
+            va = face.he.vert
+            vb = face.he.next.vert
+            vc = face.he.next.next.vert
             vsub(vab, vb.p, va.p)
             vsub(vbc, vc.p, vb.p)
             cross(face.normal, vab, vbc)
@@ -194,7 +196,9 @@ cdef class Mesh:
 
         """ Add face normal to all adjacent verts. """
         for face in self.faces:
-            va, vb, vc = face.vertices()
+            va = face.he.vert
+            vb = face.he.next.vert
+            vc = face.he.next.next.vert
             vadd(va.normal, va.normal, face.normal)
             vadd(vb.normal, vb.normal, face.normal)
             vadd(vc.normal, vc.normal, face.normal)
@@ -216,8 +220,8 @@ cdef class Mesh:
             Vert v1, v2
             HalfEdge h, start, h_twin
             int i = 0
-            double a[3]
-            double b[3]
+            double[:] a = np.zeros(3)
+            double[:] b = np.zeros(3)
             double total_curvature, d
 
         for v1 in self.verts:
@@ -247,7 +251,7 @@ cdef class Mesh:
                 i += 1
                 h = h_twin.next
 
-                if h == start:
+                if h is start:
                     break
 
             if i != 0:
@@ -264,6 +268,13 @@ cdef class Mesh:
             v += signed_triangle_volume(v1.p, v2.p, v3.p)
 
         return abs(v)
+
+    cpdef double surfaceArea(self):
+        cdef Face face
+        cdef double area = 0
+        for face in self.faces:
+            area += face.area()
+        return area
 
     cpdef list getNearby(self, Vert v, int n):
         if n < 1:
@@ -443,7 +454,7 @@ cdef class Mesh:
             vid_to_idx[v.id] = i
             vert_normals[i] = v.normal
             curvature[i] = v.curvature
-            vert_data[i] = copy.deepcopy(v.data)
+            vert_data[i] = copy.copy(v.data)
 
         for i, edge in enumerate(self.edges):
             v1, v2 = edge.vertices()

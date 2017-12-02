@@ -4,7 +4,7 @@
 # cython: nonecheck=False
 # cython: cdivision=True
 from __future__ import print_function
-from libc.math cimport floor
+from libc.math cimport floor, fmin, fmax, fabs
 from cymesh.mesh cimport Mesh
 from cymesh.structures cimport Vert, Face, Edge
 from cymesh.collisions.tri_intersection cimport tri_tri_intersection
@@ -45,13 +45,17 @@ cpdef int[:] findCollisions(Mesh mesh) except *:
     for edge in mesh.edges:
         v1 = edge.he.vert
         v2 = edge.he.twin.vert
-        maxd = max(maxd, abs(v1.p[0] - v2.p[0]))
-        maxd = max(maxd, abs(v1.p[1] - v2.p[1]))
-        maxd = max(maxd, abs(v1.p[2] - v2.p[2]))
+        maxd = fmax(maxd, fabs(v1.p[0] - v2.p[0]))
+        maxd = fmax(maxd, fabs(v1.p[1] - v2.p[1]))
+        maxd = fmax(maxd, fabs(v1.p[2] - v2.p[2]))
 
-        min_x = min(v1.p[0], min_x)
-        min_y = min(v1.p[1], min_y)
-        min_z = min(v1.p[2], min_z)
+    for v1 in mesh.verts:
+        min_x = fmin(v1.p[0], min_x)
+        min_y = fmin(v1.p[1], min_y)
+        min_z = fmin(v1.p[2], min_z)
+
+    for v1 in mesh.verts:
+        assert v1.p[1] >= min_y, (v1.p[1], min_y)
 
     ############################################################################
     # Calculate grid size and then create.
@@ -98,7 +102,15 @@ cpdef int[:] findCollisions(Mesh mesh) except *:
         # Prepend node to linked list.
         i = face_idx[fid, 0] + face_idx[fid, 1]*nx + face_idx[fid, 2]*(nynx)
 
-        assert (i >= 0 and i < nx*ny*nz)
+        if i < 0 or i >= nx*ny*nz:
+            print(i, nx, ny, nz)
+            print(list(face_idx[fid]))
+            print(center_x, center_y, center_z)
+            print(min_x, min_y, min_z)
+            print(list(v1.p))
+            print(list(v2.p))
+            print(list(v3.p))
+            assert False
 
         node_a = <Node *>mem.alloc(1, sizeof(Node))
         node_a.value = fid

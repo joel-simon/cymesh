@@ -1,1 +1,1 @@
-from .findCollisions import findCollisions
+# from cymesh.findCollisions import findCollisions

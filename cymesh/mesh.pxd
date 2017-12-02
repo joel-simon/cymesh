@@ -16,16 +16,17 @@ cdef class Mesh:
     cdef readonly list halfs
 
     # Object constructor methods.
-    cdef Vert _vert(self, double x, double y, double z, HalfEdge he=*)
-    cdef Edge _edge(self, HalfEdge he=*)
-    cdef Face _face(self, HalfEdge he=*)
-    cdef HalfEdge _half(self, HalfEdge twin=*, HalfEdge next=*,
+    cpdef Vert _vert(self, double x, double y, double z, HalfEdge he=*)
+    cpdef Edge _edge(self, HalfEdge he=*)
+    cpdef Face _face(self, HalfEdge he=*)
+    cpdef HalfEdge _half(self, HalfEdge twin=*, HalfEdge next=*,
                           Vert vert=*, Edge edge=*, Face face=*)
 
     # Public methods.
     cpdef void shortenEdges(self)
     cpdef int splitEdges(self, double max_edge_length=*) except -1
     cpdef double volume(self)
+    cpdef double surfaceArea(self)
     cpdef void calculateNormals(self)
     cpdef void calculateCurvature(self)
     cpdef list getNearby(self, Vert v, int n)

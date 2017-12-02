@@ -8,49 +8,45 @@ from cymesh.mesh import Mesh
 from cymesh.view import Viewer
 from cymesh.collisions.findCollisions import findCollisions
 
+from cymesh.subdivision.sqrt3 import divide_adaptive
+from cymesh.operators.relax import relax_mesh
+
 seed(1234)
 
 mesh = Mesh.from_obj('triangulated_sphere_2.obj')
 print('loaded mesh')
 
-max_length =  max(e.length() for e in mesh.edges) * 1.5
+max_area =  max(f.area() for f in mesh.faces) * 1.5
 start = time.time()
 
 for i in range(10):
-    print('looping', i, len(mesh.verts))
+    print(i, 'n_verts:', len(mesh.verts))
 
     mesh.calculateNormals()
     mesh.calculateCurvature()
 
-    curves = np.array([v.curvature for v in mesh.verts])
-
-    print(curves.min(), curves.max(), curves.mean())
-
     for vert in mesh.verts:
-        vert.data['old_x'] = vert.p[0]
-        vert.data['old_y'] = vert.p[1]
-        vert.data['old_z'] = vert.p[2]
+        vert.data['old_p'] = np.copy(vert.p)
 
         if vert.data.get('collided', False):
             continue
 
-        if vert.curvature < .3:
-            vert.p[0] += random() * vert.normal[0] * .4
-            vert.p[1] += random() * vert.normal[1] * .4
-            vert.p[2] += random() * vert.normal[2] * .4
+        dist = random() * .4
+        vert.p[0] += dist * vert.normal[0]
+        vert.p[1] += dist * vert.normal[1]
+        vert.p[2] += dist * vert.normal[2]
 
     collisions = findCollisions(mesh)
+    print('n_collisions:', sum(collisions))
 
     for vi, collided in enumerate(collisions):
         if collided:
             vert = mesh.verts[vi]
             vert.data['collided'] = True
-            vert.p[0] = vert.data['old_x']
-            vert.p[1] = vert.data['old_y']
-            vert.p[2] = vert.data['old_z']
+            vert.p[:] = vert.data['old_p']
 
-    mesh.splitEdges(max_length)
-    mesh.shortenEdges()
+    divide_adaptive(mesh, max_area)
+    relax_mesh(mesh)
 
 print('finished in ', time.time() - start)
 

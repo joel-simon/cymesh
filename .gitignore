@@ -2,3 +2,6 @@ build/*
 __pycache__
 *.c
 *.so
+*.html
+dist/
+cymesh.egg-info/

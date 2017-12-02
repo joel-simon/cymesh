@@ -1,10 +1,10 @@
 cimport numpy as np
 
 cdef class Vert:
-    cdef readonly unsigned int id
-    cdef readonly double[::1] normal
-    cdef readonly double curvature
-    cdef readonly HalfEdge he
+    cdef public unsigned int id
+    cdef public double[::1] normal
+    cdef public double curvature
+    cdef public HalfEdge he
     cdef public double[::1] p
     cdef public dict data
 
@@ -12,27 +12,33 @@ cdef class Vert:
     cpdef list neighbors(self)
 
 cdef class Edge:
-    cdef readonly unsigned int id
-    cdef readonly HalfEdge he
-    # cdef readonly double curvature
+    cdef public unsigned int id
+    cdef public HalfEdge he
 
     cpdef double length(self)
     cpdef tuple vertices(self)
+    cpdef tuple oppositeVertices(self)
     cpdef bint isBoundary(self)
     cpdef void flip(self)
 
 cdef class Face:
-    cdef readonly unsigned int id
-    cdef readonly double[:] normal
-    cdef readonly HalfEdge he
+    cdef public unsigned int id
+    cdef public double[:] normal
+    cdef public HalfEdge he
+
+    # Used for adaptive mesh refinement algorithm.
+    cdef public unsigned int generation
+    cdef public Face mate
 
     cpdef list vertices(self)
     cpdef list edges(self)
+    cpdef double area(self)
+    cpdef double[:] midpoint(self)
 
 cdef class HalfEdge:
-    cdef readonly unsigned int id
-    cdef readonly HalfEdge twin
-    cdef readonly HalfEdge next
-    cdef readonly Vert vert
-    cdef readonly Edge edge
-    cdef readonly Face face
+    cdef public unsigned int id
+    cdef public HalfEdge twin
+    cdef public HalfEdge next
+    cdef public Vert vert
+    cdef public Edge edge
+    cdef public Face face

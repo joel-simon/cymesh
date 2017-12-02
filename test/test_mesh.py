@@ -38,8 +38,8 @@ class TestRandomlyDistribute(unittest.TestCase):
             vert_faces = set(vert.faces())
             vert_neighbors = set(vert.neighbors())
 
-            self.assertTrue(len(vert_faces) > 0)
-            self.assertTrue(len(vert_neighbors) > 0)
+            self.assertTrue(len(vert_faces) > 2)
+            self.assertTrue(len(vert_neighbors) > 2)
 
             for face in mesh.faces:
                 if face in vert_faces:
