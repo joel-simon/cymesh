@@ -10,6 +10,7 @@ cdef class Vert:
 
     cpdef list faces(self)
     cpdef list neighbors(self)
+    cpdef list edges(self)
 
 cdef class Edge:
     cdef public unsigned int id

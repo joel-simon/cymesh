@@ -35,6 +35,25 @@ cdef class Vert:
 
         return result
 
+    cpdef list edges(self):
+        """ Return a list of vertexes directly connected to this one.
+        """
+        cdef list result = []
+        cdef HalfEdge h, start, h_twin
+
+        h = self.he
+        start = h
+
+        while True:
+            h_twin = h.twin
+            result.append(h_twin.edge)
+            h = h_twin.next
+
+            if h is start:
+                break
+
+        return result
+
     cpdef list neighbors(self):
         """ Return a list of vertexes directly connected to this one.
         """
@@ -170,15 +189,21 @@ cdef class Face:
         return result
 
     cpdef double area(self):
+        """ Area of 3D triangle.
+            http://www.iquilezles.org/blog/?p=1579
+        """
         cdef double[:] p1 = self.he.vert.p
         cdef double[:] p2 = self.he.next.vert.p
         cdef double[:] p3 = self.he.next.next.vert.p
-        cdef double a, b, c
-        # http://www.iquilezles.org/blog/?p=1579
+        cdef double a, b, c, d
+
         a = (p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2 # 1-2
         b = (p3[0] - p2[0])**2 + (p3[1] - p2[1])**2 + (p3[2] - p2[2])**2 # 2-3
         c = (p1[0] - p3[0])**2 + (p1[1] - p3[1])**2 + (p1[2] - p3[2])**2 # 1-3
-        return sqrt(2*a*b + 2*b*c + 2*c*a - a*a - b*b - c*c) / 16.0
+        d = 2*a*b + 2*b*c + 2*c*a - a*a - b*b - c*c
+        if d <= 0:
+            return 0.0
+        return sqrt(d) * .0625 # (.0625 = 1/16)
 
     cpdef double[:] midpoint(self):
         cdef double[:] p1 = self.he.vert.p

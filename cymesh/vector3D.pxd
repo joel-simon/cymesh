@@ -27,7 +27,7 @@ cdef inline void vdivf(double[:] target, double[:] a, double f) except *:
     target[1] = a[1] / f
     target[2] = a[2] / f
 
-cdef inline void cross(double[:] target, double[:] a, double[:] b):
+cdef inline void vcross(double[:] target, double[:] a, double[:] b):
     target[0] = a[1] * b[2] - a[2] * b[1]
     target[1] = a[2] * b[0] - a[0] * b[2]
     target[2] = a[0] * b[1] - a[1] * b[0]
@@ -59,3 +59,7 @@ cdef inline void inormalized(double[:] a):
 
 cdef inline double vangle(double[:] a, double[:] b):
     return acos(dot(a, b) / (sqrt(dot(a, a)) * sqrt(dot(b, b))))
+
+cdef inline double norm(double[:] a):
+    return sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2])
+

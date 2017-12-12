@@ -6,7 +6,7 @@
 import copy
 import numpy as np
 cimport numpy as np
-from vector3D cimport cross, dot, vadd, vsub, vdivf, vdist, inormalized, vmultf
+from vector3D cimport vcross, dot, vadd, vsub, vdivf, vdist, inormalized, vmultf
 
 cdef class Mesh:
     """ A half edge data structure for tri-meshes.
@@ -191,7 +191,7 @@ cdef class Mesh:
             vc = face.he.next.next.vert
             vsub(vab, vb.p, va.p)
             vsub(vbc, vc.p, vb.p)
-            cross(face.normal, vab, vbc)
+            vcross(face.normal, vab, vbc)
             inormalized(face.normal)
 
         """ Add face normal to all adjacent verts. """
