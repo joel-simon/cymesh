@@ -28,8 +28,9 @@ cdef class Mesh:
     cpdef double volume(self)
     cpdef double surfaceArea(self)
     cpdef void calculateNormals(self)
+    cpdef void calculateDefect(self) except *
     cpdef void calculateCurvature(self)
     cpdef list getNearby(self, Vert v, int n)
-    cpdef Vert splitEdge(self, Edge e)
+    cpdef tuple splitEdge(self, Edge e)
     cpdef double[:] boundingBox(self)
     cpdef void writeObj(self, str path)

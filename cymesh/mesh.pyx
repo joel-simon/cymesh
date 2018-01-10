@@ -3,10 +3,11 @@
 # cython: initializedcheck=False
 # cython: nonecheck=False
 # cython: cdivision=True
+from libc.math cimport M_PI
 import copy
 import numpy as np
 cimport numpy as np
-from vector3D cimport vcross, dot, vadd, vsub, vdivf, vdist, inormalized, vmultf
+from vector3D cimport vcross, dot, vadd, vsub, vdivf, vdist, inormalized, vmultf, vangle
 
 cdef class Mesh:
     """ A half edge data structure for tri-meshes.
@@ -213,6 +214,26 @@ cdef class Mesh:
         #     inormalized(&face.normal)
         #     node = node.next
 
+    cpdef void calculateDefect(self) except *:
+        cdef Vert v1, v2
+        cdef list neighbors
+        cdef double angle_sum
+        cdef int n
+        cdef double[:] p12 = np.zeros(3)
+        cdef double[:] p13 = np.zeros(3)
+
+        for v1 in self.verts:
+            angle_sum = 0
+            neighbors = v1.neighbors()
+            n = len(neighbors)
+
+            for i in range(n):
+                vsub(p12, neighbors[i-1].p, v1.p)
+                vsub(p13, neighbors[i].p, v1.p)
+                angle_sum += abs(vangle(p12, p13))
+
+            v1.defect = 2*M_PI - angle_sum
+
     cpdef void calculateCurvature(self):
         # https://computergraphics.stackexchange.com/questions/1718/what-is-the-simplest-way-to-compute-principal-curvature-for-a-mesh-triangle
         cdef:
@@ -297,7 +318,7 @@ cdef class Mesh:
 
         return list(vseen)
 
-    cpdef Vert splitEdge(self, Edge e):
+    cpdef tuple splitEdge(self, Edge e):
         """ Split an external or internal edge and return new vertex.
         """
         cdef Face other_face, f_nbc, f_anc, f_dna, f_dbn
@@ -332,6 +353,7 @@ cdef class Mesh:
         # Create new face.
         f_nbc = self._face()
         f_anc =  h_ab.face
+
         # Create two new edges.
         e_an = e
         e_nb = self._edge()
@@ -378,7 +400,7 @@ cdef class Mesh:
             h_ad.next = h_dn
             v_b.he = h_bn
 
-        return v_n
+        return v_n, e_an, e_nb
 
     cpdef double[:] boundingBox(self):
         cdef Vert v = self.verts[0]

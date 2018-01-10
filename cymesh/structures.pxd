@@ -4,6 +4,7 @@ cdef class Vert:
     cdef public unsigned int id
     cdef public double[::1] normal
     cdef public double curvature
+    cdef public double defect
     cdef public HalfEdge he
     cdef public double[::1] p
     cdef public dict data

@@ -15,6 +15,7 @@ cdef class Vert:
         self.he = he
         self.normal = np.zeros(3)
         self.curvature = 0
+        self.defect = 0
         self.data = dict()
 
     cpdef list faces(self):
