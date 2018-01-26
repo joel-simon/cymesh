@@ -30,7 +30,8 @@ cdef class Mesh:
     cpdef void calculateNormals(self)
     cpdef void calculateDefect(self) except *
     cpdef void calculateCurvature(self)
-    cpdef list getNearby(self, Vert v, int n)
+    # cpdef list getNearby(self, Vert v, int n)
+    cpdef list getRings(self, Vert v, int n)
     cpdef tuple splitEdge(self, Edge e)
     cpdef double[:] boundingBox(self)
     cpdef void writeObj(self, str path)

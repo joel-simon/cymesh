@@ -297,7 +297,28 @@ cdef class Mesh:
             area += face.area()
         return area
 
-    cpdef list getNearby(self, Vert v, int n):
+    # cpdef list getNearby(self, Vert v, int n):
+    #     if n < 1:
+    #         raise ValueError('n must be > 0.')
+
+    #     cdef Vert v1, v2
+    #     cdef set vseen = set([v])
+    #     cdef list vopen = [v]
+    #     cdef list next_open
+    #     cdef int i
+
+    #     for i in range(n):
+    #         next_open = []
+    #         for v1 in vopen:
+    #             for v2 in v1.neighbors():
+    #                 if v2 not in vseen:
+    #                     next_open.append(v2)
+    #                 vseen.add(v2)
+    #             vopen = next_open
+
+    #     return list(vseen)
+
+    cpdef list getRings(self, Vert v, int n):
         if n < 1:
             raise ValueError('n must be > 0.')
 
@@ -306,6 +327,7 @@ cdef class Mesh:
         cdef list vopen = [v]
         cdef list next_open
         cdef int i
+        cdef list result = []
 
         for i in range(n):
             next_open = []
@@ -313,10 +335,11 @@ cdef class Mesh:
                 for v2 in v1.neighbors():
                     if v2 not in vseen:
                         next_open.append(v2)
-                    vseen.add(v2)
+                        vseen.add(v2)
+                        result.append((i, v2))
                 vopen = next_open
 
-        return list(vseen)
+        return result
 
     cpdef tuple splitEdge(self, Edge e):
         """ Split an external or internal edge and return new vertex.
