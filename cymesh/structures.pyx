@@ -78,6 +78,7 @@ cdef class Edge:
     def __init__(self, id, he):
         self.id = id
         self.he = he
+        self.data = dict()
 
     cpdef double length(self):
         cdef double[:] p1 = self.he.vert.p

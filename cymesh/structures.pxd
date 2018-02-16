@@ -16,6 +16,8 @@ cdef class Vert:
 cdef class Edge:
     cdef public unsigned int id
     cdef public HalfEdge he
+    cdef public dict data
+    cdef double curvature # Value used in computing vert curvature.
 
     cpdef double length(self)
     cpdef tuple vertices(self)

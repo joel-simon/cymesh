@@ -29,7 +29,7 @@ cdef class Mesh:
     cpdef double surfaceArea(self)
     cpdef void calculateNormals(self)
     cpdef void calculateDefect(self) except *
-    cpdef void calculateCurvature(self)
+    cpdef void calculateCurvature(self) except *
     # cpdef list getNearby(self, Vert v, int n)
     cpdef list getRings(self, Vert v, int n)
     cpdef tuple splitEdge(self, Edge e)

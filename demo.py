@@ -6,9 +6,9 @@ mesh = Mesh.from_obj('triangulated_sphere_2.obj')
 
 # Add noise to mesh.
 for vert in mesh.verts:
-    vert.p[0] += random() * .1
-    vert.p[1] += random() * .1
-    vert.p[2] += random() * .1
+    vert.p[0] += random() * .2
+    vert.p[1] += random() * .2
+    vert.p[2] += random() * .2
 
 # If not given a max length, all edges are split.
 mesh.splitEdges()
@@ -31,11 +31,14 @@ print(export.keys())
 # Each vert has a dictionary 'data' attribute to add additional information.
 # Colors can be passed to the viewer by adding a color to data.
 for vert in mesh.verts:
-    vert.data['color'] = (random(), random(), random())
+    if vert.curvature > 0:
+        vert.data['color'] = (2*vert.curvature, 0.0, 0.0)
+    else:
+        vert.data['color'] = (0.0, -2 * vert.curvature, 0.0)
 
 # View the mesh with pyopengl.
 view = Viewer()
 view.startDraw()
-view.drawMesh(mesh, edges=True)
+view.drawMesh(mesh, edges=False)
 view.endDraw()
 view.mainLoop()

@@ -7,7 +7,7 @@ from libc.math cimport M_PI
 import copy
 import numpy as np
 cimport numpy as np
-from vector3D cimport vcross, dot, vadd, vsub, vdivf, vdist, inormalized, vmultf, vangle
+from vector3D cimport vcross, dot, vadd, vsub, vdivf, vdist, inormalized, vmultf, vangle, norm
 
 cdef class Mesh:
     """ A half edge data structure for tri-meshes.
@@ -234,49 +234,30 @@ cdef class Mesh:
 
             v1.defect = 2*M_PI - angle_sum
 
-    cpdef void calculateCurvature(self):
+    cpdef void calculateCurvature(self) except *:
         # https://computergraphics.stackexchange.com/questions/1718/what-is-the-simplest-way-to-compute-principal-curvature-for-a-mesh-triangle
         cdef:
-            Edge e
+            Edge edge
             Vert v1, v2
-            HalfEdge h, start, h_twin
-            int i = 0
-            double[:] a = np.zeros(3)
-            double[:] b = np.zeros(3)
-            double total_curvature, d
+            double n
+            double[:] ndiff = np.zeros(3)
+            double[:] pdiff = np.zeros(3)
+            double curvature
+
+        for edge in self.edges:
+            v1, v2 = edge.vertices()
+            vsub(ndiff, v1.normal, v2.normal)
+            vsub(pdiff, v1.p, v2.p)
+            curvature = dot(ndiff, pdiff) / norm(pdiff)
+            edge.curvature = curvature
 
         for v1 in self.verts:
-            i = 0
-            total_curvature = 0
-
-            h = v1.he
-            start = h
-
-            while True:
-                ###################
-                # Curvature logic.
-
-                # Iterate over each edge connected to vertex.
-                h_twin = h.twin
-                e = h.edge
-
-                vsub(a, h.vert.normal, h.twin.vert.normal)
-                vsub(b, h.vert.p, h.twin.vert.p)
-                d = vdist(h.vert.p, h_twin.vert.p)
-
-                if d != 0:
-                    total_curvature += dot(a, b) / d
-                    i += 1
-
-                ####################
-                i += 1
-                h = h_twin.next
-
-                if h is start:
-                    break
-
-            if i != 0:
-                v1.curvature = total_curvature / i
+            curvature = 0
+            n = 0.0
+            for edge in v1.edges():
+                curvature += edge.curvature
+                n += 1.0
+            v1.curvature = curvature / n
 
     cpdef double volume(self):
         # https://stackoverflow.com/a/1568551/2175411
