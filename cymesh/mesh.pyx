@@ -4,6 +4,7 @@
 # cython: nonecheck=False
 # cython: cdivision=True
 from libc.math cimport M_PI
+from libc.stdlib cimport atof, atoi
 import copy
 import numpy as np
 cimport numpy as np
@@ -22,18 +23,20 @@ cdef class Mesh:
         cdef int nv = len(raw_points)
         cdef int nf = len(raw_polygons)
         cdef HalfEdge he, h_ba, h_ab, twin
+        cdef Face face
         cdef dict pair_to_half = {} # (i,j) tuple -> half edge
         cdef dict he_boundary = {} # Create boundary edges.
         cdef int n_halfs = 0
-        cdef int a, b
+        cdef int a, b, i
 
         cdef list verts = []
         cdef list halfs = []
+        cdef list p, poly
 
         """ Build half-edge data structure.
         """
         # Create Vert objects.
-        for i, p in enumerate(raw_points):
+        for p in raw_points:
             verts.append(self._vert(p[0], p[1], p[2], he=None))
 
         # Create Face objects.
@@ -56,10 +59,9 @@ cdef class Mesh:
                 pair_to_half[pair_ab] = len(halfs)-1
                 face_half_edges.append(len(halfs)-1)
 
-
                 # Link to twin if it exists.
                 if pair_ba in pair_to_half:
-                    h_ba =  halfs[pair_to_half[pair_ba]]
+                    h_ba = <HalfEdge>halfs[pair_to_half[pair_ba]]
                     h_ba.twin = h_ab
                     h_ab.twin = h_ba
                     h_ab.edge = h_ba.edge
@@ -85,28 +87,33 @@ cdef class Mesh:
         for start, (he_id, end) in he_boundary.items():
             he = halfs[he_id]
             he.next = halfs[he_boundary[end][0]]
-            # self.boundary_start = he
+
+    @classmethod
+    def parse_obj(cls, filename):
+        cdef list points = []
+        cdef list faces = []
+        cdef list face
+
+        with open(filename, 'r') as f:
+            for line in f:
+                if len(line) < 2 or line[ 0 ] == '#':
+                    continue
+
+                values = line.split()
+
+                if values[0] == 'v':
+                    points.append([ float(values[1]), float(values[2]),\
+                                    float(values[3]) ])
+                elif values[0] == 'f':
+                    face = [ int(values[1].split('/')[0])-1,
+                             int(values[2].split('/')[0])-1,
+                             int(values[3].split('/')[0])-1 ]
+                    faces.append(face)
+        return points, faces
 
     @classmethod
     def from_obj(cls, filename):
-        points = []
-        faces = []
-
-        with open(filename, 'r') as objfile:
-            for line in objfile:
-                if line.startswith('#'):
-                    continue
-                values = line.split()
-                if not values:continue
-                if values[0] == 'v':
-                    points.append([float(v) for v in values[1:4]])
-                elif values[0] == 'f':
-                    face = []
-                    for v in values[1:]:
-                        w = v.split('/')
-                        face.append(int(w[0]) - 1) # .obj uses 1 based indexing.
-                    faces.append(face)
-
+        points, faces = Mesh.parse_obj(filename)
         return cls(points, faces)
 
     # Constructor functions.
@@ -215,24 +222,36 @@ cdef class Mesh:
         #     node = node.next
 
     cpdef void calculateDefect(self) except *:
-        cdef Vert v1, v2
-        cdef list neighbors
+        cdef int n, i, n_neighbors
         cdef double angle_sum
-        cdef int n
+        cdef Vert vert, neighbor_a, neighbor_b
         cdef double[:] p12 = np.zeros(3)
         cdef double[:] p13 = np.zeros(3)
 
-        for v1 in self.verts:
-            angle_sum = 0
-            neighbors = v1.neighbors()
-            n = len(neighbors)
+        cdef HalfEdge h, start, h_twin
 
-            for i in range(n):
-                vsub(p12, neighbors[i-1].p, v1.p)
-                vsub(p13, neighbors[i].p, v1.p)
+        for vert in self.verts:
+            angle_sum = 0
+            n_neighbors = 0
+            h = vert.he
+            start = h
+
+            while True:
+                h_twin = h.twin
+
+                neighbor_a = h_twin.vert
+                neighbor_b = h_twin.next.twin.vert
+
+                vsub(p12, neighbor_a.p, vert.p)
+                vsub(p13, neighbor_b.p, vert.p)
                 angle_sum += abs(vangle(p12, p13))
 
-            v1.defect = 2*M_PI - angle_sum
+                h = h_twin.next
+                n_neighbors += 1
+                if h is start:
+                    break
+
+            vert.defect = 2*M_PI - angle_sum
 
     cpdef void calculateCurvature(self) except *:
         # https://computergraphics.stackexchange.com/questions/1718/what-is-the-simplest-way-to-compute-principal-curvature-for-a-mesh-triangle
