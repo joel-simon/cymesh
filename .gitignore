@@ -5,3 +5,4 @@ __pycache__
 *.html
 dist/
 cymesh.egg-info/
+*.DS_Store

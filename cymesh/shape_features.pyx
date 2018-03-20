@@ -9,7 +9,7 @@ from libc.stdlib cimport rand, srand, RAND_MAX
 import numpy as np
 cimport numpy as np
 
-from cymesh.vector3D cimport vdist, vangle
+from cymesh.vector3D cimport vdist, vangle, vsub
 from cymesh.mesh cimport Mesh
 from cymesh.structures cimport Vert
 
@@ -69,3 +69,45 @@ cpdef double[:] a2_features(Mesh mesh, tuple hrange=(0.0, 3.0), int n_points=102
     """
     mesh.calculateNormals()
     return create_features(a2_metric, mesh, hrange, n_points, n_bins, rseed)
+
+
+cpdef double[:] a3_features(Mesh mesh, tuple hrange=(0.0, 3.0), int n_points=1024,
+                            int n_bins=64, int rseed=123) except *:
+    """ Similar to d2 features but use the angle between the normal directions.
+    """
+    cdef int i, j, k, n, n_verts
+    cdef double mean_value, rms, hmin, hmax
+    cdef double[:] values = np.zeros(n_points)
+    cdef double[:] tmp_a = np.zeros(3)
+    cdef double[:] tmp_b = np.zeros(3)
+    cdef double values_sqr = 0
+
+    srand(rseed)
+
+    n = 0
+    n_verts = len(mesh.verts)
+
+    if hrange is not None:
+        hmin = hrange[0]
+        hmax = hrange[1]
+
+    while n < n_points:
+        i = rand() % (n_verts-1)
+        j = rand() % (n_verts-1)
+        k = rand() % (n_verts-1)
+        if i != k and i != j and j != k:
+            vsub(tmp_a, mesh.verts[i].p, mesh.verts[j].p)
+            vsub(tmp_b, mesh.verts[k].p, mesh.verts[j].p)
+            values[n] = vangle(tmp_a, tmp_b)
+            values_sqr += values[n] * values[n]
+            n += 1
+
+    rms = sqrt(values_sqr / n_points) # Normalize by the root-mean-square.
+
+    for i in range(n_points):
+        values[i] /= rms
+        if hrange is not None:
+            values[i] = max(hmin, values[i])
+            values[i] = min(hmax, values[i])
+
+    return np.histogram(values, bins=n_bins, density=True)[0]
