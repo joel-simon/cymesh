@@ -205,7 +205,7 @@ cdef class Face:
         d = 2*a*b + 2*b*c + 2*c*a - a*a - b*b - c*c
         if d <= 0:
             return 0.0
-        return sqrt(d) * .0625 # (.0625 = 1/16)
+        return sqrt(d * .0625) # (.0625 = 1/16)
 
     cpdef double[:] midpoint(self):
         cdef double[:] p1 = self.he.vert.p
